@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retiros WinsGana</title>
+  <style>
+    /* Estilos generales */
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 500px;
+      background: #fff;
+      margin: 50px auto;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    h1 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    p.instruction {
+      font-size: 16px;
+      color: #555;
+      margin-bottom: 20px;
+    }
+    form {
+      margin-top: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 16px;
+      color: #333;
+      text-align: left;
+    }
+    input[type="text"],
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    input[type="text"]::placeholder {
+      color: #aaa;
+    }
+    #previewContainer {
+      margin-bottom: 15px;
+    }
+    #previewContainer img {
+      max-width: 100%;
+      max-height: 200px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button.submit-btn {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 4px;
+      width: 100%;
+    }
+    button.submit-btn:hover {
+      background-color: #45a049;
+    }
+    /* Modal de éxito */
+    .modal {
+      display: none; /* Oculto por defecto */
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background: #fff;
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .modal-content p {
+      font-size: 18px;
+      color: #333;
+    }
+    .modal-content button {
+      margin-top: 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .modal-content button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Título e Instrucción -->
+  <img src="logo.png" alt="Logo" width="250">
+  <h1>ENVIANOS TU QR</h1>
+  <h1><span class="icon-text">🪙</span>Min: 20 BOB&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="icon-text">💰</span>Max: 5,000 BOB</h1>
+  <p class="instruction">Por favor, ingresa tu número de documento y adjunta el documento de tu QR. Recuerda haber verificado tu cuenta para proceder con tu pago, solo se aceptan documentos JPG o PNG.</p>
+
+  <!-- Formulario -->
+  <form id="uploadForm">
+    <label for="docNumber">Ingresa tu número de documento:</label>
+    <input type="text" id="docNumber" name="docNumber" maxlength="12" required placeholder="Ej: 1234567890">
+
+    <label for="monto">Monto que desea retirar:</label>
+    <input type="text" id="monto" name="monto" maxlength="4" required placeholder="Ej: 100">
+
+    <label for="fileInput">Selecciona tu archivo:</label>
+    <input type="file" id="fileInput" name="file" accept=".pdf, image/jpeg, image/png" required>
+
+    <div id="previewContainer"></div>
+    <button type="submit" class="submit-btn">Enviar QR</button>
+  </form>
+</div>
+
+<!-- Modal de éxito -->
+<div id="successModal" class="modal">
+  <div class="modal-content">
+    <p>✅ Pronto tu pago será procesado, se te enviara una notificacion al correo.</p>
+    <button id="modalAccept">Aceptar</button>
+  </div>
+</div>
+
+<script>
+  // Vista previa del archivo
+  const fileInput = document.getElementById('fileInput');
+  const previewContainer = document.getElementById('previewContainer');
+
+  fileInput.addEventListener('change', function(event) {
+    previewContainer.innerHTML = ''; // Limpiar vista previa anterior
+    const file = event.target.files[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          previewContainer.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      } else if (file.type === 'application/pdf') {
+        const pdfIcon = document.createElement('div');
+        pdfIcon.textContent = "📄 Archivo PDF seleccionado";
+        pdfIcon.style.fontSize = '16px';
+        pdfIcon.style.color = '#333';
+        previewContainer.appendChild(pdfIcon);
+      } else {
+        previewContainer.textContent = "Archivo seleccionado: " + file.name;
+      }
+    }
+  });
+
+  // Envío del formulario vía AJAX
+  document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData();
+    const file = fileInput.files[0];
+    const docNumber = document.getElementById('docNumber').value.trim();
+    let monto = document.getElementById('monto').value.trim();
+
+    if (!file || !docNumber || !monto) {
+      alert("Por favor, ingresa todos los campos y selecciona un archivo.");
+      return;
+    }
+
+    // Eliminar cualquier punto en el monto (en caso de re-edición)
+    monto = monto.replace(/\./g, '');
+
+    // Formatear el monto si tiene 4 dígitos (insertar punto de separación de miles)
+    if (monto.length === 4) {
+      monto = monto.slice(0,1) + '.' + monto.slice(1);
+    }
+
+    formData.append('file', file);
+    formData.append('docNumber', docNumber);
+    formData.append('monto', monto);
+
+    fetch('procesar.php', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message && data.message.indexOf("✅") !== -1) {
+        document.getElementById('successModal').style.display = 'block';
+      } else {
+        alert("❌ " + (data.message || "Error al enviar el QR."));
+      }
+    })
+    .catch(error => {
+      console.error(error);
+      alert("❌ Error al enviar el QR.");
+    });
+  });
+
+  // Redirigir al hacer clic en "Aceptar" en el modal
+  document.getElementById('modalAccept').addEventListener('click', function() {
+    window.location.href = 'https://www.winsgana.com';
+  });
+</script>
+
+</body>
+</html>
