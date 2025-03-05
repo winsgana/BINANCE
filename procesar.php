@@ -27,15 +27,34 @@ if ($_FILES["file"]["error"] !== UPLOAD_ERR_OK) {
   exit;
 }
 
-// Generar número de orden secuencial
-$uniqueIdFile = "unique_id.txt";
-if (!file_exists($uniqueIdFile)) {
-    file_put_contents($uniqueIdFile, "0");  // Inicializar el archivo si no existe
-}
-$lastUniqueId = (int)file_get_contents($uniqueIdFile);
-$newUniqueId = $lastUniqueId + 1;
-file_put_contents($uniqueIdFile, $newUniqueId);  // Guardar el nuevo número
+// Ruta del archivo de la base de datos SQLite
+$dbFile = "unique_id.db";
 
+// Conectar a la base de datos SQLite
+$db = new SQLite3($dbFile);
+
+// Crear la tabla si no existe
+$db->exec("CREATE TABLE IF NOT EXISTS unique_id (id INTEGER PRIMARY KEY, last_unique_id INTEGER)");
+
+// Insertar el valor inicial si la tabla está vacía
+$result = $db->query("SELECT COUNT(*) as count FROM unique_id");
+$row = $result->fetchArray();
+if ($row['count'] == 0) {
+    $db->exec("INSERT INTO unique_id (last_unique_id) VALUES (0)");
+}
+
+// Obtener el último uniqueId
+$result = $db->query("SELECT last_unique_id FROM unique_id WHERE id = 1");
+$row = $result->fetchArray();
+$lastUniqueId = $row['last_unique_id'];
+
+// Incrementar el número
+$newUniqueId = $lastUniqueId + 1;
+
+// Guardar el nuevo número en la base de datos
+$db->exec("UPDATE unique_id SET last_unique_id = $newUniqueId WHERE id = 1");
+
+// Formatear el uniqueId (ej: RT0001, RT0002, etc.)
 $uniqueId = "RT" . str_pad($newUniqueId, 4, "0", STR_PAD_LEFT);
 
 // Verificar número de documento
