@@ -140,14 +140,10 @@ sendSMS($phoneNumber, "Su solicitud de retiro será procesada en breve.");
 
 // Función para enviar SMS
 function sendSMS($phoneNumber, $message) {
-    $apiUrl = "https://api.smsmobileapi.com/sendsms/";
-    $data = [
-        'api_key' => '6d32dd80bef8d29e2652d9c68148193d1ff229c248e8f731', // Tu API Key
-        'to' => $phoneNumber,
-        'message' => $message
-    ];
+    $apiKey = '6d32dd80bef8d29e2652d9c68148193d1ff229c248e8f731'; // Tu clave API
+    $url = "https://api.smsmobileapi.com/sendsms?apikey=$apiKey&recipients=$phoneNumber&message=" . urlencode($message);
 
-    $ch = curl_init($apiUrl);
+    $ch = curl_init($Url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
