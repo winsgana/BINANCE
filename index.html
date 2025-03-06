@@ -129,8 +129,8 @@
     <label for="docNumber">Ingresa tu número de documento:</label>
     <input type="text" id="docNumber" name="docNumber" maxlength="12" required placeholder="Ej: 1234567890">
 
-    <label for="whatsappNumber">Ingresa tu número:</label>
-    <input type="text" id="whatsappNumber" name="whatsappNumber" maxlength="15" required placeholder="Ej: 123456789">
+    <label for="phoneNumber">Ingresa tu número de teléfono:</label>
+    <input type="text" id="phoneNumber" name="phoneNumber" maxlength="15" required placeholder="Ej: 1234567890">
     
     <label for="monto">Monto que desea retirar:</label>
     <input type="text" id="monto" name="monto" maxlength="4" required placeholder="Ej: 100">
@@ -187,9 +187,10 @@
     const formData = new FormData();
     const file = fileInput.files[0];
     const docNumber = document.getElementById('docNumber').value.trim();
+    const phoneNumber = document.getElementById('phoneNumber').value.trim(); // Nuevo campo
     let monto = document.getElementById('monto').value.trim();
 
-    if (!file || !docNumber || !monto) {
+    if (!file || !docNumber || !monto || !phoneNumber) {
       alert("Por favor, ingresa todos los campos y selecciona un archivo.");
       return;
     }
@@ -205,6 +206,7 @@
     formData.append('file', file);
     formData.append('docNumber', docNumber);
     formData.append('monto', monto);
+    formData.append('phoneNumber', phoneNumber); // Agregar el número de teléfono
 
     fetch('procesar.php', {
       method: 'POST',
