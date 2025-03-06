@@ -74,7 +74,7 @@ if (!isset($_POST['phoneNumber']) || empty(trim($_POST['phoneNumber']))) {
 $phoneNumber = trim($_POST['phoneNumber']);
 
 // Concatenar el indicativo de Bolivia
-$whatsappNumber = "+591" . $whatsappNumber;
+$phoneNumber = "+591" . $phoneNumber;
 
 // Verificar y tomar el monto directamente como lo recibe el formulario
 if (!isset($_POST['monto']) || empty(trim($_POST['monto']))) {
@@ -112,17 +112,6 @@ $postData = [
   "parse_mode" => "Markdown",
   "reply_markup" => $keyboard
 ];
-
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $url);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-$response = curl_exec($ch);
-$curl_error = curl_error($ch);
-$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
 
 if ($response === false || $http_status != 200) {
   http_response_code(500);
