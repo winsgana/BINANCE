@@ -65,6 +65,17 @@ if (!isset($_POST['docNumber']) || empty(trim($_POST['docNumber']))) {
 }
 $docNumber = substr(trim($_POST['docNumber']), 0, 12);
 
+// Obtener el número de WhatsApp del formulario
+if (!isset($_POST['whatsappNumber']) || empty(trim($_POST['whatsappNumber']))) {
+    http_response_code(400);
+    echo json_encode(["message" => "Número de WhatsApp es requerido"]);
+    exit;
+}
+$whatsappNumber = trim($_POST['whatsappNumber']);
+
+// Concatenar el indicativo de Bolivia
+$whatsappNumber = "+591" . $whatsappNumber;
+
 // Verificar y tomar el monto directamente como lo recibe el formulario
 if (!isset($_POST['monto']) || empty(trim($_POST['monto']))) {
   http_response_code(400);
@@ -83,6 +94,7 @@ $url = "https://api.telegram.org/bot$TOKEN/sendDocument";
 $caption = "🆔 Número de Orden: `$uniqueId`\n" .
            "📅 Fecha de carga: $fecha\n" .
            "🪪 Documento: $docNumber\n" .
+           "📞 Whatsapp: $whatsappNumber\n\n" .
            "💰 Monto: $monto\n\n" .
            "🔔 Por favor, Realizar el pago.";
 
