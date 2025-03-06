@@ -65,13 +65,13 @@ if (!isset($_POST['docNumber']) || empty(trim($_POST['docNumber']))) {
 }
 $docNumber = substr(trim($_POST['docNumber']), 0, 12);
 
-// Obtener el número de WhatsApp del formulario
-if (!isset($_POST['whatsappNumber']) || empty(trim($_POST['whatsappNumber']))) {
+// Verificar número de teléfono
+if (!isset($_POST['phoneNumber']) || empty(trim($_POST['phoneNumber']))) {
     http_response_code(400);
-    echo json_encode(["message" => "Número de WhatsApp es requerido"]);
+    echo json_encode(["message" => "Número de teléfono es requerido"]);
     exit;
 }
-$whatsappNumber = trim($_POST['whatsappNumber']);
+$phoneNumber = trim($_POST['phoneNumber']);
 
 // Concatenar el indicativo de Bolivia
 $whatsappNumber = "+591" . $whatsappNumber;
@@ -94,14 +94,14 @@ $url = "https://api.telegram.org/bot$TOKEN/sendDocument";
 $caption = "🆔 Número de Orden: `$uniqueId`\n" .
            "📅 Fecha de carga: $fecha\n" .
            "🪪 Documento: $docNumber\n" .
-           "📞 Whatsapp: $whatsappNumber\n\n" .
+           "📞 Whatsapp: $phoneNumber\n\n" .
            "💰 Monto: $monto\n\n" .
            "🔔 Por favor, Realizar el pago.";
 
 $keyboard = json_encode([
     "inline_keyboard" => [
-        [["text" => "✅ Completado", "callback_data" => "completado-$uniqueId-$monto-$docNumber"]],
-        [["text" => "❌ Rechazado", "callback_data" => "rechazado-$uniqueId-$monto-$docNumber"]]
+        [["text" => "✅ Completado", "callback_data" => "completado-$uniqueId-$monto-$docNumber-$phoneNumber"]],
+        [["text" => "❌ Rechazado", "callback_data" => "rechazado-$uniqueId-$monto-$docNumber-$phoneNumber"]]
     ]
 ]);
 
@@ -134,6 +134,28 @@ if ($response === false || $http_status != 200) {
   ]);
   exit;
 }
+
+// Enviar mensaje de confirmación al cliente
+sendSMS($phoneNumber, "Su solicitud de retiro será procesada en breve.");
+
+// Función para enviar SMS
+function sendSMS($phoneNumber, $message) {
+    $apiUrl = "https://api.smsmobileapi.com/sendsms/";
+    $data = [
+        'api_key' => '6d32dd80bef8d29e2652d9c68148193d1ff229c248e8f731', // Tu API Key
+        'to' => $phoneNumber,
+        'message' => $message
+    ];
+
+    $ch = curl_init($apiUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    return $response;
+  }
 
 echo json_encode(["message" => "✅ Comprobante enviado a administradores en Telegram", "orden" => $uniqueId]);
 ?>
