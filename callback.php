@@ -63,6 +63,13 @@ if ($responseDelete === false || $http_status != 200) {
     exit;
 }
 
+// Enviar mensaje de resultado al cliente
+if ($accion === "completado") {
+    sendSMS($docNumber, "✅ Su solicitud ha sido procesada exitosamente.");
+} else {
+    sendSMS($docNumber, "❌ Su solicitud ha sido rechazada.");
+}
+
 // Enviar un nuevo mensaje con la información actualizada
 $url = "https://api.telegram.org/bot$TOKEN/sendMessage";
 $nuevoTexto = "🆔 Número de Orden: `$uniqueId`\n" .
