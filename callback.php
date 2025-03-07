@@ -1,5 +1,7 @@
 <?php
-$TOKEN = "7649868783:AAF-aTgEuA2o7q2jaXGJ5awrysEy04hgJl4";  // Token del bot
+$TOKEN = "7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2uCKDI";  // Token del bot
+
+date_default_timezone_set('America/La_Paz'); // Asegura la hora local correcta
 
 $content = file_get_contents("php://input");
 $update = json_decode($content, true);
@@ -17,7 +19,7 @@ $messageId = $update["callback_query"]["message"]["message_id"];
 $user = $update["callback_query"]["from"];
 
 // Extraer datos del callback_data
-preg_match('/(completado|rechazado)-(RT\d{4})-(.*?)-(\d{1,12})/', $callbackData, $matches);
+preg_match('/(completado|rechazado)-(DP\d{4})-(.*?)-(\d{1,12})-(\d{8})/', $callbackData, $matches);
 if (!$matches) {
     file_put_contents("callback_log.txt", "❌ Error: callback_data desconocido ($callbackData).\n", FILE_APPEND);
     exit;
@@ -26,7 +28,8 @@ if (!$matches) {
 $accion = $matches[1];  // "completado" o "rechazado"
 $uniqueId = $matches[2];  // El uniqueId generado en procesar.php
 $monto = $matches[3];  // El monto enviado desde procesar.php
-$docNumber = $matches[4];  // El numero de documento procesar.php
+$docNumber = $matches[4];  // El número de documento de procesar.php
+$phoneNumber = "591" . $matches[5];  // El número de teléfono enviado desde procesar.php
 
 // Obtener nombre del usuario
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
@@ -69,7 +72,8 @@ $nuevoTexto = "🆔 Número de Orden: `$uniqueId`\n" .
               "👤 Administrador: $adminName\n" .
               "📅 Fecha de acción: $fechaAccion\n" .
               "🪪 Documento: $docNumber\n" .
-              "💰 Monto: $monto\n" .  // Aquí agregamos el monto
+              "📱 Teléfono: $fullPhoneNumber\n" .
+              "💰 Monto: $monto BOB\n" .
               "$accionTexto";
 
 $postDataSend = [
@@ -95,33 +99,31 @@ if ($responseSend === false || $http_status != 200) {
     file_put_contents("callback_log.txt", "❌ Error al enviar el mensaje: $curl_error\n", FILE_APPEND);
 }
 
-// Enviar notificación de WhatsApp al cliente
-$whatsappMessage = "🔔 Su solicitud ha sido " . ($accion === "completado" ? "completada" : "rechazada") . ".\n" .
-                   "📅 Fecha de acción: $fechaAccion\n" .
-                   "💰 Monto: $monto\n" .
-                   "🔔 Gracias por su solicitud.";
+// ========== Envío de WhatsApp ==========
+// Mensaje para el cliente
+if ($accion === "completado") {
+    $whatsappMessage = "✅ Su solicitud con orden $uniqueId ha sido COMPLETADA con éxito.%0AGracias por confiar en nosotros.";
+} else {
+    $whatsappMessage = "❌ Su solicitud con orden $uniqueId ha sido RECHAZADA.%0APor favor, contáctenos para más información.";
+}
 
-sendWhatsAppNotification($phoneNumber, $whatsappMessage); // Asegúrate de que $phoneNumber esté definido
+// Enviar mensaje por WhatsApp
+sendWhatsApp($phoneNumber, $whatsappMessage);
 
-// Función para enviar notificación de WhatsApp
-function sendWhatsAppNotification($phoneNumber, $message) {
-    $apiKey = '6d32dd80bef8d29e2652d9c68148193d1ff229c248e8f731'; // Tu clave API
-    $url = "https://api.smsmobileapi.com/sendsms?apikey=$apiKey&waonly=yes&recipients=" . urlencode($phoneNumber) . "&message=" . urlencode($message);
+// Función para enviar WhatsApp
+function sendWhatsApp($phoneNumber, $message) {
+    $apiKey = '6d32dd80bef8d29e2652d9c68148193d1ff229c248e8f731';
 
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $response = curl_exec($ch);
-    
-    // Verificar si hubo un error en la solicitud
-    if (curl_errno($ch)) {
-        $error_msg = curl_error($ch);
-        file_put_contents("whatsapp_error_log.txt", "Error al enviar WhatsApp: $error_msg\n", FILE_APPEND);
-    } else {
-        // Registra la respuesta de la API
-        file_put_contents("whatsapp_response_log.txt", "Respuesta de WhatsApp: $response\n", FILE_APPEND);
-    }
+    $url = "https://api.smsmobileapi.com/sendsms/?" . http_build_query([
+        "recipients" => $phoneNumber,
+        "message"    => $message,
+        "apikey"     => $apiKey,
+        "waonly"     => "yes"
+    ]);
 
-    curl_close($ch);
+    $response = file_get_contents($url);
+    file_put_contents("whatsapp_log.txt", date('Y-m-d H:i:s') . " - URL: $url\nResponse: $response\n", FILE_APPEND);
+
     return $response;
 }
 
