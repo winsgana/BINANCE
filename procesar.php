@@ -116,9 +116,9 @@ if ($response === false || $http_status != 200) {
 }
 
 // Enviar notificación de WhatsApp
-$whatsappMessage = "✅ Su solicitud ha sido recibida.%0A" .
-                   "📅 Fecha: $fecha%0A" .
-                   "💰 Monto: $monto BOB%0A" .
+$whatsappMessage = "✅ Su solicitud ha sido recibida" . PHP_EOL .
+                   "📅 Fecha: $fecha" . PHP_EOL .
+                   "💰 Monto: $monto BOB" . PHP_EOL .
                    "🔔 Te notificaremos cuando este procesada.";
 
 sendWhatsApp($fullPhoneNumber, $whatsappMessage);
