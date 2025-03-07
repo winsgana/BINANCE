@@ -113,15 +113,18 @@ if ($response === false || $http_status != 200) {
     exit;
 }
 
-// Enviar mensaje de WhatsApp al cliente
-$whatsappMessage = "Test message";
+// Enviar notificación de WhatsApp al cliente
+$whatsappMessage = "✅ Su solicitud ha sido recibida.\n" .
+                   "📅 Fecha: $fecha\n" .
+                   "💰 Monto: $monto\n" .
+                   "🔔 Gracias por su solicitud.";
 
-sendWhatsAppNotification($phoneNumber, $whatsappMessage);
+sendWhatsApp($phoneNumber, $whatsappMessage);
 
 // ====================================================
 // SOLUCIÓN PRINCIPAL: Envío correcto a WhatsApp (POST)
 // ====================================================
-function sendWhatsApp($phone, $message) {
+function sendWhatsApp($phoneNumber, $whatsappMessage) {
     $apiKey = '6d32dd80bef8d29e2652d9c68148193d1ff229c248e8f731';
     
     $ch = curl_init("https://api.smsmobileapi.com/sendsms");
