@@ -30,6 +30,7 @@ $accion = $matches[1];  // "completado" o "rechazado"
 $uniqueId = $matches[2];  // El uniqueId generado en procesar.php
 $monto = $matches[3];  // El monto enviado desde procesar.php
 $docNumber = $matches[4];  // El número de documento de procesar.php
+$phoneNumber = "591" . $matches[5];  // El número de teléfono enviado desde procesar.php
 
 // ✅ Extraer teléfono directamente desde el mensaje de Telegram
 preg_match('/📱 Teléfono: (\d+)/', $messageText, $phoneMatch);
