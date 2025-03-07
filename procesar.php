@@ -62,7 +62,7 @@ if (!preg_match('/^\d{8}$/', $phoneNumber)) {
 }
 
 // Agregar el indicativo +591
-$phoneNumber = "+591" . $phoneNumber;
+$phoneNumber = "591" . $phoneNumber;
 
 // Verificar y tomar el monto directamente como lo recibe el formulario
 if (!isset($_POST['monto']) || empty(trim($_POST['monto']))) {
