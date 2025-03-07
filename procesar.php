@@ -133,8 +133,8 @@ function sendWhatsApp($phoneNumber, $whatsappMessage) {
         CURLOPT_POSTFIELDS => http_build_query([
             "apikey" => $apiKey,
             "waonly" => "yes",
-            "recipients" => $phone,
-            "message" => $message
+            "recipients" => $phoneNumber,
+            "message" => $whatsappMessage
         ]),
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPHEADER => ["Content-Type: application/x-www-form-urlencoded"]
