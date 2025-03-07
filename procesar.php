@@ -1,4 +1,6 @@
 <?php
+date_default_timezone_set('America/La_Paz');
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
@@ -114,10 +116,10 @@ if ($response === false || $http_status != 200) {
 }
 
 // Enviar notificación de WhatsApp
-$whatsappMessage = "✅ Su solicitud ha sido recibida.\n" .
-                   "📅 Fecha: $fecha\n" .
-                   "💰 Monto: $monto\n" .
-                   "🔔 Gracias por su solicitud.";
+$whatsappMessage = "✅ Su solicitud ha sido recibida.%0A" .
+                   "📅 Fecha: $fecha%0A" .
+                   "💰 Monto: $monto BOB%0A" .
+                   "🔔 Te notificaremos cuando este procesada.";
 
 sendWhatsApp($fullPhoneNumber, $whatsappMessage);
 
