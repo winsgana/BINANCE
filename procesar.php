@@ -59,16 +59,10 @@ $caption = "🆔 Número de Orden: `$uniqueId`\n" .
            "💰 Monto: $monto BOB\n\n" .
            "🔔 Por favor, Realizar el pago.";
 
-// Callback con el teléfono incluido
-$callbackData = "completado-$uniqueId-$monto-$docNumber-$fullPhoneNumber";
-
-// Log para verificar que el callback_data es correcto
-file_put_contents("procesar_log.txt", "📥 Callback generado: $callbackData\n", FILE_APPEND);
-
 $keyboard = json_encode([
     "inline_keyboard" => [
-        [["text" => "✅ Completado", "callback_data" => $callbackData]],
-        [["text" => "❌ Rechazado", "callback_data" => str_replace('completado', 'rechazado', $callbackData)]]
+        [["text" => "✅ Completado", "callback_data" => "completado-$uniqueId-$monto-$docNumber"]],
+        [["text" => "❌ Rechazado", "callback_data" => "rechazado-$uniqueId-$monto-$docNumber"]]
     ]
 ]);
 
