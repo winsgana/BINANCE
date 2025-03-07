@@ -75,7 +75,7 @@ file_get_contents("https://api.telegram.org/bot$TOKEN/sendMessage?" . http_build
 
 // Enviar mensaje a WhatsApp
 $whatsappMessage = $accion === "completado"
-    ? "✅ Su solicitud ha sido COMPLETADA con éxito.%0AGracias por confiar en nosotros."
+    ? "✅ ¡Es oficial! Tu solicitud está completamente lista.%0AGracias por ser parte de Winsgana, donde cada jugada cuenta y cada momento puede ser épico.%0A🔥 Te deseamos la mejor de las suertes, porque la suerte premia a los valientes.%0A🔔 Recuerda: este es un canal de notificaciones automáticas."
     : "❌ Su solicitud ha sido RECHAZADA.%0APor favor, contáctenos para más información.";
 
 sendWhatsApp($fullPhoneNumber, $whatsappMessage);
