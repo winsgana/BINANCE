@@ -126,25 +126,30 @@ sendWhatsApp($phoneNumber, $whatsappMessage);
 // ====================================================
 function sendWhatsApp($phoneNumber, $whatsappMessage) {
     $apiKey = '6d32dd80bef8d29e2652d9c68148193d1ff229c248e8f731';
-    
-    $ch = curl_init("https://api.smsmobileapi.com/sendsms");
+    $phoneNumber = "591" . $phoneNumber;  // Asegúrate de que esté bien el formato
+
+    $url = "https://api.smsmobileapi.com/sendsms?waonly=yes";
+
+    $postFields = [
+        "apikey" => $apiKey,
+        "recipients" => $phoneNumber,
+        "message" => $whatsappMessage
+    ];
+
+    $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => http_build_query([
-            "apikey" => $apiKey,
-            "waonly" => "yes",
-            "recipients" => $phoneNumber,
-            "message" => $whatsappMessage
-        ]),
+        CURLOPT_POSTFIELDS => http_build_query($postFields),
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPHEADER => ["Content-Type: application/x-www-form-urlencoded"]
     ]);
-    
+
     $response = curl_exec($ch);
     $error = curl_error($ch);
     curl_close($ch);
-    
+
     file_put_contents("whatsapp_log.txt", date('Y-m-d H:i:s') . " - Response: $response\nError: $error\n", FILE_APPEND);
+
     return $response;
 }
 
