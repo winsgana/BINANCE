@@ -123,10 +123,7 @@ if ($response === false || $http_status != 200) {
 }
 
 // Enviar mensaje de WhatsApp al cliente
-$whatsappMessage = "✅ Su solicitud ha sido recibida.\n" .
-                   "📅 Fecha: $fecha\n" .
-                   "💰 Monto: $monto\n" .
-                   "🔔 Te notificaremos cuando este procesada.";
+$whatsappMessage = "Test message";
 
 sendWhatsAppNotification($phoneNumber, $whatsappMessage);
 
