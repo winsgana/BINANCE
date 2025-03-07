@@ -1,5 +1,5 @@
 <?php
-$TOKEN = "7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2uCKDI";  // Token del bot
+$TOKEN = "7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2dCKDI";  // Token del bot
 
 date_default_timezone_set('America/La_Paz'); // Asegura la hora local correcta
 
@@ -16,10 +16,11 @@ if (!$update || !isset($update["callback_query"])) {
 $callbackData = $update["callback_query"]["data"];
 $chatId = $update["callback_query"]["message"]["chat"]["id"];
 $messageId = $update["callback_query"]["message"]["message_id"];
+$messageText = $update["callback_query"]["message"]["caption"] ?? $update["callback_query"]["message"]["text"];
 $user = $update["callback_query"]["from"];
 
-// Extraer datos del callback_data
-preg_match('/(completado|rechazado)-(DP\d{4})-(.*?)-(\d{1,12})-(\d{8})/', $callbackData, $matches);
+// Extraer datos del callback_data (sin teléfono ahora)
+preg_match('/(completado|rechazado)-(DP\d{4})-(.*?)-(\d{1,12})/', $callbackData, $matches);
 if (!$matches) {
     file_put_contents("callback_log.txt", "❌ Error: callback_data desconocido ($callbackData).\n", FILE_APPEND);
     exit;
@@ -29,9 +30,17 @@ $accion = $matches[1];  // "completado" o "rechazado"
 $uniqueId = $matches[2];  // El uniqueId generado en procesar.php
 $monto = $matches[3];  // El monto enviado desde procesar.php
 $docNumber = $matches[4];  // El número de documento de procesar.php
-$phoneNumber = "591" . $matches[5];  // El número de teléfono enviado desde procesar.php
 
-// Obtener nombre del usuario
+// ✅ Extraer teléfono directamente desde el mensaje de Telegram
+preg_match('/📱 Teléfono: (\d+)/', $messageText, $phoneMatch);
+$fullPhoneNumber = $phoneMatch[1] ?? null;
+
+if (!$fullPhoneNumber) {
+    file_put_contents("callback_log.txt", "❌ Error: No se encontró teléfono en el mensaje.\n", FILE_APPEND);
+    exit;
+}
+
+// Obtener nombre del usuario (administrador que presionó el botón)
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
 if (isset($user["username"])) {
     $adminName .= " (@" . $user["username"] . ")";
@@ -55,16 +64,9 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, $postDataDelete);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
 $responseDelete = curl_exec($ch);
-$curl_error = curl_error($ch);
-$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
 file_put_contents("callback_log.txt", "📌 Respuesta de borrar mensaje: " . $responseDelete . "\n", FILE_APPEND);
-
-if ($responseDelete === false || $http_status != 200) {
-    file_put_contents("callback_log.txt", "❌ Error al borrar el mensaje: $curl_error\n", FILE_APPEND);
-    exit;
-}
 
 // Enviar un nuevo mensaje con la información actualizada
 $url = "https://api.telegram.org/bot$TOKEN/sendMessage";
@@ -89,26 +91,20 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, $postDataSend);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
 $responseSend = curl_exec($ch);
-$curl_error = curl_error($ch);
-$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
 file_put_contents("callback_log.txt", "📌 Respuesta de enviar mensaje nuevo: " . $responseSend . "\n", FILE_APPEND);
 
-if ($responseSend === false || $http_status != 200) {
-    file_put_contents("callback_log.txt", "❌ Error al enviar el mensaje: $curl_error\n", FILE_APPEND);
-}
-
 // ========== Envío de WhatsApp ==========
 // Mensaje para el cliente
 if ($accion === "completado") {
-    $whatsappMessage = "✅ Su solicitud con orden $uniqueId ha sido COMPLETADA con éxito.%0AGracias por confiar en nosotros.";
+    $whatsappMessage = "✅ Su solicitud ha sido COMPLETADA con éxito.%0AGracias por confiar en nosotros.";
 } else {
-    $whatsappMessage = "❌ Su solicitud con orden $uniqueId ha sido RECHAZADA.%0APor favor, contáctenos para más información.";
+    $whatsappMessage = "❌ Su solicitud ha sido RECHAZADA.%0APor favor, contáctenos para más información.";
 }
 
 // Enviar mensaje por WhatsApp
-sendWhatsApp($phoneNumber, $whatsappMessage);
+sendWhatsApp($fullPhoneNumber, $whatsappMessage);
 
 // Función para enviar WhatsApp
 function sendWhatsApp($phoneNumber, $message) {
