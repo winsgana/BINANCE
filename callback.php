@@ -20,7 +20,7 @@ $messageText = $update["callback_query"]["message"]["caption"] ?? $update["callb
 $user = $update["callback_query"]["from"];
 
 // Extraer datos del callback_data (sin teléfono ahora)
-preg_match('/(completado|rechazado)-(DP\d{4})-(.*?)-(\d{1,12})/', $callbackData, $matches);
+preg_match('/(completado|rechazado)-(RT\d{4})-(.*?)-(\d{1,12})/', $callbackData, $matches);
 if (!$matches) {
     file_put_contents("callback_log.txt", "❌ Error: callback_data desconocido ($callbackData).\n", FILE_APPEND);
     exit;
@@ -30,14 +30,15 @@ $accion = $matches[1];  // "completado" o "rechazado"
 $uniqueId = $matches[2];  // El uniqueId generado en procesar.php
 $monto = $matches[3];  // El monto enviado desde procesar.php
 $docNumber = $matches[4];  // El número de documento de procesar.php
-$phoneNumber = "591" . $matches[5];  // El número de teléfono enviado desde procesar.php
+$phoneNumber = $matches[5];  // El número de teléfono enviado desde procesar.php
 
 // ✅ Extraer teléfono directamente desde el mensaje de Telegram
+$messageText = $update["callback_query"]["message"]["caption"] ?? $update["callback_query"]["message"]["text"];
 preg_match('/📱 Teléfono: (\d+)/', $messageText, $phoneMatch);
-$fullPhoneNumber = $phoneMatch[1] ?? null;
+$phoneNumber = $phoneMatch[1] ?? null;
 
-if (!$fullPhoneNumber) {
-    file_put_contents("callback_log.txt", "❌ Error: No se encontró teléfono en el mensaje.\n", FILE_APPEND);
+if (!$phoneNumber) {
+    file_put_contents("callback_log.txt", "❌ Error: No se encontró el teléfono en el mensaje.\n", FILE_APPEND);
     exit;
 }
 
