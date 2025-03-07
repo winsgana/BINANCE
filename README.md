@@ -1,2 +1,0 @@
-# BINANCE
-Carga de comprovantes 
