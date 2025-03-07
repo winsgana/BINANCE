@@ -1,5 +1,5 @@
 <?php
-$TOKEN = "7957554764:AAHUzfquZDDVEiwOy_u292haqMmPK2dCKDI";  
+$TOKEN = "7768625990:AAGd7poAx9VCb8zxSoVS01bWI-5NVY0v0CY";  
 date_default_timezone_set('America/La_Paz');
 
 $content = file_get_contents("php://input");
