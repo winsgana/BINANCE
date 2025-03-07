@@ -126,7 +126,7 @@ function sendWhatsApp($phoneNumber, $message) {
     $apiKey = '6d32dd80bef8d29e2652d9c68148193d1ff229c248e8f731';
 
     // Codificar el mensaje completo
-    $message = urlencode($message);
+    $message = rawurlencode($message);
     
     $url = "https://api.smsmobileapi.com/sendsms/?" . http_build_query([
         "recipients" => $phoneNumber,
