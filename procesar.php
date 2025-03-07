@@ -46,22 +46,13 @@ if (!isset($_POST['docNumber']) || empty(trim($_POST['docNumber']))) {
 }
 $docNumber = substr(trim($_POST['docNumber']), 0, 12);
 
-// Verificar número de teléfono y agregar el indicativo +591
-if (!isset($_POST['phoneNumber']) || empty(trim($_POST['phoneNumber']))) {
+// Formatear número de teléfono
+$phoneNumber = preg_replace('/\D/', '', $_POST["phoneNumber"]);
+if (strlen($phoneNumber) !== 8) {
     http_response_code(400);
-    echo json_encode(["message" => "Número de teléfono es requerido"]);
+    echo json_encode(["message" => "Número debe tener 8 dígitos"]);
     exit;
 }
-$phoneNumber = trim($_POST['phoneNumber']);
-
-// Asegurarse de que el número de teléfono tenga el formato correcto
-if (!preg_match('/^\d{8}$/', $phoneNumber)) {
-    http_response_code(400);
-    echo json_encode(["message" => "Número de teléfono debe tener 8 dígitos sin el indicativo."]);
-    exit;
-}
-
-// Agregar el indicativo +591
 $phoneNumber = "591" . $phoneNumber;
 
 // Verificar y tomar el monto directamente como lo recibe el formulario
@@ -127,25 +118,30 @@ $whatsappMessage = "Test message";
 
 sendWhatsAppNotification($phoneNumber, $whatsappMessage);
 
-// Función para enviar notificación de WhatsApp
-function sendWhatsAppNotification($phoneNumber, $message) {
-    $apiKey = '6d32dd80bef8d29e2652d9c68148193d1ff229c248e8f731'; // Tu clave API
-    $url = "https://api.smsmobileapi.com/sendsms?apikey=$apiKey&waonly=yes&recipients=" . urlencode($phoneNumber) . "&message=" . urlencode($message);
-
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $response = curl_exec($ch);
+// ====================================================
+// SOLUCIÓN PRINCIPAL: Envío correcto a WhatsApp (POST)
+// ====================================================
+function sendWhatsApp($phone, $message) {
+    $apiKey = '6d32dd80bef8d29e2652d9c68148193d1ff229c248e8f731';
     
-    // Verificar si hubo un error en la solicitud
-    if (curl_errno($ch)) {
-        $error_msg = curl_error($ch);
-        file_put_contents("whatsapp_error_log.txt", "Error al enviar WhatsApp: $error_msg\n", FILE_APPEND);
-    } else {
-        // Registra la respuesta de la API
-        file_put_contents("whatsapp_response_log.txt", "Respuesta de WhatsApp: $response\n", FILE_APPEND);
-    }
-
+    $ch = curl_init("https://api.smsmobileapi.com/sendsms");
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => http_build_query([
+            "apikey" => $apiKey,
+            "waonly" => "yes",
+            "recipients" => $phone,
+            "message" => $message
+        ]),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => ["Content-Type: application/x-www-form-urlencoded"]
+    ]);
+    
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
     curl_close($ch);
+    
+    file_put_contents("whatsapp_log.txt", date('Y-m-d H:i:s') . " - Response: $response\nError: $error\n", FILE_APPEND);
     return $response;
 }
 
