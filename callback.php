@@ -63,13 +63,6 @@ if ($responseDelete === false || $http_status != 200) {
     exit;
 }
 
-// Enviar mensaje de resultado al cliente
-if ($accion === "completado") {
-    sendSMS($docNumber, "✅ Su solicitud ha sido procesada exitosamente.");
-} else {
-    sendSMS($docNumber, "❌ Su solicitud ha sido rechazada.");
-}
-
 // Enviar un nuevo mensaje con la información actualizada
 $url = "https://api.telegram.org/bot$TOKEN/sendMessage";
 $nuevoTexto = "🆔 Número de Orden: `$uniqueId`\n" .
@@ -100,6 +93,36 @@ file_put_contents("callback_log.txt", "📌 Respuesta de enviar mensaje nuevo: "
 
 if ($responseSend === false || $http_status != 200) {
     file_put_contents("callback_log.txt", "❌ Error al enviar el mensaje: $curl_error\n", FILE_APPEND);
+}
+
+// Enviar notificación de WhatsApp al cliente
+$whatsappMessage = "🔔 Su solicitud ha sido " . ($accion === "completado" ? "completada" : "rechazada") . ".\n" .
+                   "📅 Fecha de acción: $fechaAccion\n" .
+                   "💰 Monto: $monto\n" .
+                   "🔔 Gracias por su solicitud.";
+
+sendWhatsAppNotification($phoneNumber, $whatsappMessage); // Asegúrate de que $phoneNumber esté definido
+
+// Función para enviar notificación de WhatsApp
+function sendWhatsAppNotification($phoneNumber, $message) {
+    $apiKey = '6d32dd80bef8d29e2652d9c68148193d1ff229c248e8f731'; // Tu clave API
+    $url = "https://api.smsmobileapi.com/sendsms?apikey=$apiKey&waonly=yes&recipients=" . urlencode($phoneNumber) . "&message=" . urlencode($message);
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($ch);
+    
+    // Verificar si hubo un error en la solicitud
+    if (curl_errno($ch)) {
+        $error_msg = curl_error($ch);
+        file_put_contents("whatsapp_error_log.txt", "Error al enviar WhatsApp: $error_msg\n", FILE_APPEND);
+    } else {
+        // Registra la respuesta de la API
+        file_put_contents("whatsapp_response_log.txt", "Respuesta de WhatsApp: $response\n", FILE_APPEND);
+    }
+
+    curl_close($ch);
+    return $response;
 }
 
 exit;
