@@ -84,7 +84,9 @@ curl_close($ch);
 file_put_contents("procesar_log.txt", "📤 Respuesta de Telegram: $response\n", FILE_APPEND);
 
 // Enviar WhatsApp de recepción
-$whatsappMessage = "✅ Su solicitud ha sido recibida\n\n🗓 Fecha: $fecha\n💰 Monto: $monto BOB\n\n🔔 Te notificaremos cuando esté procesada.";
+$whatsappMessage = "📢 Confirmación de Solicitud de Depósito\n\n🗓 Fecha: $fecha\n💰 Monto: $monto BOB\n\n🔔 Tu solicitud ha sido recibida con éxito y está en proceso. Te informaremos una vez que haya sido completada.\n\n🔔 Recuerda que este canal es exclusivamente para notificaciones automáticas. Si necesitas asistencia, por favor contacta a nuestro equipo de soporte por los medios oficiales.\n
+
+¡Gracias por tu confianza!";
 sendWhatsApp($fullPhoneNumber, $whatsappMessage);
 
 function sendWhatsApp($phoneNumber, $message) {
