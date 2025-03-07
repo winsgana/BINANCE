@@ -3,8 +3,8 @@ header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
 // Configuración del bot de Telegram para pagos al cliente (QR)
-$TOKEN = "7649868783:AAF-aTgEuA2o7q2jaXGJ5awrysEy04hgJl4";  // Tu token de bot
-$CHAT_ID = "-4757550811";  // Chat ID para pagos al cliente
+$TOKEN = "7649868783:AAF-aTgEuA2o7q2jaXGJ5awrysEy04hgJl4";
+$CHAT_ID = "-4757550811";
 
 // Solo se aceptan solicitudes POST
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
@@ -20,7 +20,6 @@ if (!isset($_FILES['file'])) {
     exit;
 }
 
-// Verificar si hay error en la subida
 if ($_FILES["file"]["error"] !== UPLOAD_ERR_OK) {
     http_response_code(400);
     echo json_encode(["message" => "Error al subir el archivo: " . $_FILES["file"]["error"]]);
@@ -30,15 +29,15 @@ if ($_FILES["file"]["error"] !== UPLOAD_ERR_OK) {
 // Generar número de orden secuencial
 $uniqueIdFile = "unique_id.txt";
 if (!file_exists($uniqueIdFile)) {
-    file_put_contents($uniqueIdFile, "0");  // Inicializar el archivo si no existe
+    file_put_contents($uniqueIdFile, "0");
 }
 $lastUniqueId = (int)file_get_contents($uniqueIdFile);
 $newUniqueId = $lastUniqueId + 1;
-file_put_contents($uniqueIdFile, $newUniqueId);  // Guardar el nuevo número
+file_put_contents($uniqueIdFile, $newUniqueId);
 
 $uniqueId = "RT" . str_pad($newUniqueId, 4, "0", STR_PAD_LEFT);
 
-// Verificar número de documento
+// Validar número de documento
 if (!isset($_POST['docNumber']) || empty(trim($_POST['docNumber']))) {
     http_response_code(400);
     echo json_encode(["message" => "Número de documento es requerido"]);
@@ -53,26 +52,27 @@ if (strlen($phoneNumber) !== 8) {
     echo json_encode(["message" => "Número debe tener 8 dígitos"]);
     exit;
 }
-$phoneNumber = "591" . $phoneNumber;
+$fullPhoneNumber = "591" . $phoneNumber;
 
-// Verificar y tomar el monto directamente como lo recibe el formulario
+// Validar monto
 if (!isset($_POST['monto']) || empty(trim($_POST['monto']))) {
     http_response_code(400);
     echo json_encode(["message" => "El monto es requerido"]);
     exit;
 }
-$monto = $_POST['monto'];  // Tomar el monto directamente como lo recibe
+$monto = $_POST['monto'];
 
 $nombreArchivo = $_FILES["file"]["name"];
 $rutaTemporal = $_FILES["file"]["tmp_name"];
 $fecha = date('Y-m-d H:i:s');
 
+// Enviar documento a Telegram
 $url = "https://api.telegram.org/bot$TOKEN/sendDocument";
 
-// Preparar el mensaje que se enviará a Telegram
 $caption = "🆔 Número de Orden: `$uniqueId`\n" .
            "📅 Fecha de carga: $fecha\n" .
            "🪪 Documento: $docNumber\n" .
+           "📱 Teléfono: $fullPhoneNumber\n" .
            "💰 Monto: $monto\n\n" .
            "🔔 Por favor, Realizar el pago.";
 
@@ -113,42 +113,27 @@ if ($response === false || $http_status != 200) {
     exit;
 }
 
-// Enviar notificación de WhatsApp al cliente
+// Enviar notificación de WhatsApp
 $whatsappMessage = "✅ Su solicitud ha sido recibida.\n" .
                    "📅 Fecha: $fecha\n" .
                    "💰 Monto: $monto\n" .
                    "🔔 Gracias por su solicitud.";
 
-sendWhatsApp($phoneNumber, $whatsappMessage);
+sendWhatsApp($fullPhoneNumber, $whatsappMessage);
 
-// ====================================================
-// SOLUCIÓN PRINCIPAL: Envío correcto a WhatsApp (POST)
-// ====================================================
-function sendWhatsApp($phoneNumber, $whatsappMessage) {
+// Función para enviar WhatsApp usando GET directo (como lo hiciste manualmente)
+function sendWhatsApp($phoneNumber, $message) {
     $apiKey = '6d32dd80bef8d29e2652d9c68148193d1ff229c248e8f731';
-    $phoneNumber = "591" . $phoneNumber;  // Asegúrate de que esté bien el formato
 
-    $url = "https://api.smsmobileapi.com/sendsms?waonly=yes";
-
-    $postFields = [
-        "apikey" => $apiKey,
+    $url = "https://api.smsmobileapi.com/sendsms/?" . http_build_query([
         "recipients" => $phoneNumber,
-        "message" => $whatsappMessage
-    ];
-
-    $ch = curl_init($url);
-    curl_setopt_array($ch, [
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => http_build_query($postFields),
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER => ["Content-Type: application/x-www-form-urlencoded"]
+        "message"    => $message,
+        "apikey"     => $apiKey,
+        "waonly"     => "yes"
     ]);
 
-    $response = curl_exec($ch);
-    $error = curl_error($ch);
-    curl_close($ch);
-
-    file_put_contents("whatsapp_log.txt", date('Y-m-d H:i:s') . " - Response: $response\nError: $error\n", FILE_APPEND);
+    $response = file_get_contents($url);
+    file_put_contents("whatsapp_log.txt", date('Y-m-d H:i:s') . " - URL: $url\nResponse: $response\n", FILE_APPEND);
 
     return $response;
 }
