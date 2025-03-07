@@ -16,11 +16,10 @@ if (!$update || !isset($update["callback_query"])) {
 $callbackData = $update["callback_query"]["data"];
 $chatId = $update["callback_query"]["message"]["chat"]["id"];
 $messageId = $update["callback_query"]["message"]["message_id"];
-$messageText = $update["callback_query"]["message"]["caption"] ?? $update["callback_query"]["message"]["text"];
 $user = $update["callback_query"]["from"];
 
-// Extraer datos del callback_data (sin teléfono, porque lo sacamos del caption)
-preg_match('/(completado|rechazado)-(RT\d{4})-(.*?)-(\d{1,12})/', $callbackData, $matches);
+// Extraer datos del callback_data (ahora sí con el teléfono incluido)
+preg_match('/(completado|rechazado)-(RT\d{4})-(.*?)-(\d{1,12})-(\d{8,12})/', $callbackData, $matches);
 if (!$matches) {
     file_put_contents("callback_log.txt", "❌ Error: callback_data desconocido ($callbackData).\n", FILE_APPEND);
     exit;
@@ -30,20 +29,9 @@ $accion = $matches[1];
 $uniqueId = $matches[2];
 $monto = $matches[3];
 $docNumber = $matches[4];
+$fullPhoneNumber = $matches[5];  // Teléfono con 591
 
-// ✅ Extraer el teléfono directamente desde el mensaje original (caption)
-preg_match('/📱 Teléfono: (\d+)/', $messageText, $phoneMatch);
-$phoneNumber = $phoneMatch[1] ?? null;
-
-if (!$phoneNumber) {
-    file_put_contents("callback_log.txt", "❌ Error: No se encontró el teléfono en el mensaje.\n", FILE_APPEND);
-    exit;
-}
-
-// Asegurar que tenga el prefijo 591 (por seguridad, aunque debería ya venir bien)
-$fullPhoneNumber = (str_starts_with($phoneNumber, "591")) ? $phoneNumber : "591" . $phoneNumber;
-
-// Obtener nombre del administrador (quien presionó el botón)
+// Obtener nombre del administrador
 $adminName = $user["first_name"] ?? "Administrador";
 if (isset($user["username"])) {
     $adminName .= " (@" . $user["username"] . ")";
@@ -53,7 +41,7 @@ if (isset($user["username"])) {
 $accionTexto = ($accion === "completado") ? "✅ COMPLETADO" : "❌ RECHAZADO";
 $fechaAccion = date('Y-m-d H:i:s');
 
-// Eliminar el mensaje original en Telegram
+// Eliminar mensaje original
 $urlDelete = "https://api.telegram.org/bot$TOKEN/deleteMessage";
 $postDataDelete = [
     "chat_id" => $chatId,
@@ -69,7 +57,7 @@ curl_close($ch);
 
 file_put_contents("callback_log.txt", "📌 Respuesta de borrar mensaje: " . $responseDelete . "\n", FILE_APPEND);
 
-// Enviar un nuevo mensaje a Telegram con la actualización
+// Enviar mensaje nuevo con resumen actualizado
 $url = "https://api.telegram.org/bot$TOKEN/sendMessage";
 $nuevoTexto = "🆔 Número de Orden: `$uniqueId`\n" .
               "👤 Administrador: $adminName\n" .
@@ -94,7 +82,7 @@ curl_close($ch);
 
 file_put_contents("callback_log.txt", "📌 Respuesta de enviar mensaje nuevo: " . $responseSend . "\n", FILE_APPEND);
 
-// ========== Envío de WhatsApp ==========
+// Enviar WhatsApp
 if ($accion === "completado") {
     $whatsappMessage = "✅ Su solicitud ha sido COMPLETADA con éxito.%0AGracias por confiar en nosotros.";
 } else {
@@ -120,4 +108,3 @@ function sendWhatsApp($phoneNumber, $message) {
 
 exit;
 ?>
-
