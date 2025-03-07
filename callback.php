@@ -41,6 +41,7 @@ if (!$phoneNumber) {
     file_put_contents("callback_log.txt", "❌ Error: No se encontró el teléfono en el mensaje.\n", FILE_APPEND);
     exit;
 }
+$fullPhoneNumber = $phoneNumber;
 
 // Obtener nombre del usuario (administrador que presionó el botón)
 $adminName = isset($user["first_name"]) ? $user["first_name"] : "Administrador";
