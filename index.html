@@ -195,6 +195,10 @@
       return;
     }
 
+    // Deshabilitar el botón de envío
+    const submitButton = document.querySelector('.submit-btn');
+    submitButton.disabled = true;
+    
     // Eliminar cualquier punto en el monto (en caso de re-edición)
     monto = monto.replace(/\./g, '');
 
