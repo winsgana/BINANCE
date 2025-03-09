@@ -184,6 +184,9 @@
   document.getElementById('uploadForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
+    // Mostrar el indicador de carga
+    document.getElementById('loadingIndicator').style.display = 'block';
+
     const formData = new FormData();
     const file = fileInput.files[0];
     const docNumber = document.getElementById('docNumber').value.trim();
@@ -216,17 +219,29 @@
       method: 'POST',
       body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        // Verificar si la respuesta es exitosa
+        if (!response.ok) {
+            throw new Error('Error en la red');
+        }
+        return response.json();
+    })
     .then(data => {
-      if (data.message && data.message.indexOf("✅") !== -1) {
-        document.getElementById('successModal').style.display = 'block';
-      } else {
-        alert("❌ " + (data.message || "Error al enviar el QR."));
-      }
+        // Ocultar el indicador de carga
+        document.getElementById('loadingIndicator').style.display = 'none';
+
+        // Manejo de la respuesta
+        if (data.message && data.message.indexOf("✅") !== -1) {
+            document.getElementById('successModal').style.display = 'block';
+        } else {
+            alert("❌ " + (data.message || "Error al enviar el QR."));
+        }
     })
     .catch(error => {
-      console.error(error);
-      alert("❌ Error al enviar el QR.");
+        // Ocultar el indicador de carga
+        document.getElementById('loadingIndicator').style.display = 'none';
+        console.error(error);
+        alert("❌ Error al enviar el QR.");
     });
   });
 
