@@ -13,6 +13,9 @@ $chatId = $update["callback_query"]["message"]["chat"]["id"] ?? '';
 $messageId = $update["callback_query"]["message"]["message_id"] ?? '';
 $messageText = $update["callback_query"]["message"]["caption"] ?? '';
 
+// Obtener el documento del mensaje original
+$fileId = $update["callback_query"]["message"]["document"]["file_id"] ?? '';
+
 preg_match('/(completado|rechazado)-(RT\\d{4})-(.*?)-(\\d{1,12})/', $callbackData, $matches);
 $accion = $matches[1] ?? '';
 $uniqueId = $matches[2] ?? '';
@@ -35,17 +38,19 @@ file_get_contents("https://api.telegram.org/bot" . TELEGRAM_TOKEN . "/deleteMess
     "message_id" => $messageId
 ]));
 
-$nuevoTexto = "🆔 Número de Orden: `$uniqueId`\n" .
-              "👤 Administrador: $adminName\n" .
-              "📅 Fecha de acción: $fechaAccion\n" .
-              "🪪 Documento: $docNumber\n" .
-              "📱 Teléfono: `$fullPhoneNumber`\n" .
-              "💰 Monto: $monto BOB\n" .
-              "$accionTexto";
+$caption = "🆔 Número de Orden: `$uniqueId`\n" .
+           "👤 Administrador: $adminName\n" .
+           "📅 Fecha de acción: $fechaAccion\n" .
+           "🪪 Documento: $docNumber\n" .
+           "📱 Teléfono: `$fullPhoneNumber`\n" .
+           "💰 Monto: $monto BOB\n" .
+           "$accionTexto";
 
-file_get_contents("https://api.telegram.org/bot" . TELEGRAM_TOKEN . "/sendMessage?" . http_build_query([
+// Enviar siempre el documento con el mensaje de confirmación
+file_get_contents("https://api.telegram.org/bot" . TELEGRAM_TOKEN . "/sendDocument?" . http_build_query([
     "chat_id" => $chatId,
-    "text" => $nuevoTexto,
+    "document" => $fileId,
+    "caption" => $caption,
     "parse_mode" => "Markdown"
 ]));
 
